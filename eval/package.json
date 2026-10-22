@@ -1,0 +1,15 @@
+{
+  "name": "reroute-eval",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic evaluation harness and regression testing for ReRoute with Promptfoo",
+  "scripts": {
+    "eval": "promptfoo eval --no-cache --no-share",
+    "eval:baseline": "promptfoo eval -o results/baseline.json --no-cache --no-share",
+    "gate": "python scripts/pass_rate_gate.py results/baseline.json",
+    "summary": "python scripts/summarize_results.py results/baseline.json"
+  },
+  "dependencies": {
+    "promptfoo": "0.124.1"
+  }
+}

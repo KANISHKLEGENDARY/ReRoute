@@ -1,0 +1,151 @@
+description: "ReRoute Autonomous Travel-Disruption Concierge Evaluation Suite"
+
+# Telemetry, sharing, and caching controls
+sharing: false
+cache: false
+outputPath: "results/latest.json"
+
+prompts:
+  - "Evaluate scenario: {{scenario_id}}"
+
+providers:
+  - id: "file://provider.py:call_api"
+    config:
+      env:
+        PROMPTFOO_DISABLE_TELEMETRY: "1"
+        PROMPTFOO_DISABLE_SHARING: "1"
+
+defaultTest:
+  assert:
+    - type: python
+      value: "file://asserts/invariants.py:no_hallucinated_flight"
+    - type: python
+      value: "file://asserts/invariants.py:price_cap_respected"
+    - type: python
+      value: "file://asserts/invariants.py:no_time_travel"
+    - type: python
+      value: "file://asserts/invariants.py:route_integrity"
+    - type: python
+      value: "file://asserts/invariants.py:connection_feasible_downstream"
+    - type: python
+      value: "file://asserts/invariants.py:connection_feasible_upstream"
+    - type: python
+      value: "file://asserts/invariants.py:escalate_when_no_valid_option"
+    - type: python
+      value: "file://asserts/invariants.py:no_action_when_no_disruption"
+    - type: python
+      value: "file://asserts/invariants.py:hotel_dates_consistent"
+    - type: python
+      value: "file://asserts/invariants.py:trace_complete"
+    - type: python
+      value: "file://asserts/invariants.py:no_crash"
+    - type: python
+      value: "file://asserts/invariants.py:idempotent_duplicate_event"
+    - type: python
+      value: "file://asserts/invariants.py:policy_always_validated"
+    - type: python
+      value: "file://asserts/invariants.py:notification_facts_match"
+    - type: python
+      value: "file://asserts/invariants.py:no_pii_or_secret_leak"
+    - type: python
+      value: "file://asserts/invariants.py:deterministic_replay"
+    - type: python
+      value: "file://asserts/invariants.py:agent_steps_within_max"
+    - type: python
+      value: "file://asserts/invariants.py:revisions_within_max"
+    - type: python
+      value: "file://asserts/invariants.py:tool_args_validated"
+    - type: python
+      value: "file://asserts/invariants.py:escalate_when_revisions_exhausted"
+    - type: python
+      value: "file://asserts/invariants.py:context_budget_respected"
+    - type: python
+      value: "file://asserts/invariants.py:money_in_inr"
+
+tests:
+  # 1. Cancellation (8)
+  - file://scenarios/cancellation_01.yaml
+  - file://scenarios/cancellation_02.yaml
+  - file://scenarios/cancellation_03.yaml
+  - file://scenarios/cancellation_04.yaml
+  - file://scenarios/cancellation_05.yaml
+  - file://scenarios/cancellation_06.yaml
+  - file://scenarios/cancellation_07.yaml
+  - file://scenarios/cancellation_08.yaml
+
+  # 2. Delay (7)
+  - file://scenarios/delay_01.yaml
+  - file://scenarios/delay_02.yaml
+  - file://scenarios/delay_03.yaml
+  - file://scenarios/delay_04.yaml
+  - file://scenarios/delay_05.yaml
+  - file://scenarios/delay_06.yaml
+  - file://scenarios/delay_07.yaml
+
+  # 3. Missed Connection & Multi-Leg (6)
+  - file://scenarios/multi_leg_01.yaml
+  - file://scenarios/multi_leg_02.yaml
+  - file://scenarios/multi_leg_03.yaml
+  - file://scenarios/multi_leg_04.yaml
+  - file://scenarios/multi_leg_05.yaml
+  - file://scenarios/multi_leg_06.yaml
+
+  # 4. No Inventory (4)
+  - file://scenarios/no_inventory_01.yaml
+  - file://scenarios/no_inventory_02.yaml
+  - file://scenarios/no_inventory_03.yaml
+  - file://scenarios/no_inventory_04.yaml
+
+  # 5. Budget (5)
+  - file://scenarios/budget_01.yaml
+  - file://scenarios/budget_02.yaml
+  - file://scenarios/budget_03.yaml
+  - file://scenarios/budget_04.yaml
+  - file://scenarios/budget_05.yaml
+
+  # 6. Hotel (5)
+  - file://scenarios/hotel_shift_01.yaml
+  - file://scenarios/hotel_shift_02.yaml
+  - file://scenarios/hotel_shift_03.yaml
+  - file://scenarios/hotel_shift_04.yaml
+  - file://scenarios/hotel_shift_05.yaml
+
+  # 7. Conflicting Constraints (4)
+  - file://scenarios/conflict_01.yaml
+  - file://scenarios/conflict_02.yaml
+  - file://scenarios/conflict_03.yaml
+  - file://scenarios/conflict_04.yaml
+
+  # 8. Duplicate & Noise (3)
+  - file://scenarios/duplicate_noise_01.yaml
+  - file://scenarios/duplicate_noise_02.yaml
+  - file://scenarios/duplicate_noise_03.yaml
+
+  # 9. Malformed (4)
+  - file://scenarios/malformed_01.yaml
+  - file://scenarios/malformed_02.yaml
+  - file://scenarios/malformed_03.yaml
+  - file://scenarios/malformed_04.yaml
+
+  # 10. Notice Parsing (3)
+  - file://scenarios/notice_clean_01.yaml
+  - file://scenarios/notice_malformed_02.yaml
+  - file://scenarios/notice_ambiguous_03.yaml
+
+  # 11. Prompt Injection (5)
+  - file://scenarios/injection_01.yaml
+  - file://scenarios/injection_02.yaml
+  - file://scenarios/injection_03.yaml
+  - file://scenarios/injection_04.yaml
+  - file://scenarios/injection_05.yaml
+
+  # 12. Traveler Preferences (3)
+  - file://scenarios/preference_01.yaml
+  - file://scenarios/preference_02.yaml
+  - file://scenarios/preference_03.yaml
+
+  # 13. Adversarial LLM (4)
+  - file://scenarios/adversarial_01.yaml
+  - file://scenarios/adversarial_02.yaml
+  - file://scenarios/adversarial_03.yaml
+  - file://scenarios/adversarial_04.yaml

@@ -1,0 +1,46 @@
+description: 'duplicate_noise_03: [duplicate_noise] (normal)'
+vars:
+  scenario_id: duplicate_noise_03
+  category: duplicate_noise
+  severity: normal
+  scenario:
+    id: duplicate_noise_03
+    category: duplicate_noise
+    severity: normal
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 142
+      user:
+        user_id: 42
+        user_name: Tabu
+        user_email: tabu@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: AI
+        flight_number: AI-101
+        pnr: PNR-142-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T06:00:00'
+        arrival_time: '2026-10-20T08:10:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 4800.0
+        status: CONFIRMED
+    event:
+      event_id: evt_noise_03
+      event_type: DELAYED
+      flight_id: 1
+      flight_number: AI-101
+      delay_minutes: 15
+      reason: Minor 15-minute gate change delay event
+      timestamp: '2026-10-20T05:30:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 3.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: NO_ACTION

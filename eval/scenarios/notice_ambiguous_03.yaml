@@ -1,0 +1,44 @@
+description: 'notice_ambiguous_03: [notice_parsing] (normal)'
+vars:
+  scenario_id: notice_ambiguous_03
+  category: notice_parsing
+  severity: normal
+  scenario:
+    id: notice_ambiguous_03
+    category: notice_parsing
+    severity: normal
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 149
+      user:
+        user_id: 49
+        user_name: Konkona Sen
+        user_email: konkona@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: 6E
+        flight_number: 6E-204
+        pnr: PNR-149-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T06:00:00'
+        arrival_time: '2026-10-20T08:10:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 4800.0
+        status: CONFIRMED
+    event:
+      event_id: evt_notice_03
+      event_type: NONE
+      notice_text: Weather advisory for BOM airport. Flight 6E-204 is operating normally
+        as scheduled. Expect moderate turbulence during approach.
+      timestamp: '2026-10-20T05:00:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 3.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: NO_ACTION

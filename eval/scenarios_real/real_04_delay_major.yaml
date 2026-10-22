@@ -1,0 +1,56 @@
+description: 'real_04_delay_major: [delay] (normal) - Real LLM'
+vars:
+  scenario_id: real_04_delay_major
+  category: delay
+  severity: normal
+  scenario:
+    id: real_04_delay_major
+    category: delay
+    severity: normal
+    seed: 104
+    llm_mode: real
+    itinerary:
+      itinerary_id: 204
+      user:
+        user_id: 204
+        user_name: Vijay Varma
+        user_email: vijay@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: 6E
+        flight_number: 6E-204
+        pnr: PNR-REAL-04
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T06:00:00'
+        arrival_time: '2026-10-20T08:10:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 4800.0
+        status: CONFIRMED
+    event:
+      event_id: evt_real_04
+      event_type: DELAYED
+      flight_id: 1
+      flight_number: 6E-204
+      delay_minutes: 240
+      reason: Dense fog at Delhi airport causing 4-hour delay
+      timestamp: '2026-10-20T05:00:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 3.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: REBOOKED
+      policy_verdict: APPROVED
+assert:
+- type: python
+  value: file://asserts/quality.py:best_option_chosen
+- type: python
+  value: file://asserts/quality.py:latency_budget
+- type: python
+  value: file://asserts/quality.py:explanation_present
+- type: python
+  value: file://asserts/quality.py:explanation_clarity_rubric

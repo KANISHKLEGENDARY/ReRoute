@@ -1,0 +1,58 @@
+description: 'multi_leg_03: [missed_connection] (critical)'
+vars:
+  scenario_id: multi_leg_03
+  category: missed_connection
+  severity: critical
+  scenario:
+    id: multi_leg_03
+    category: missed_connection
+    severity: critical
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 118
+      user:
+        user_id: 18
+        user_name: Ranbir Kapoor
+        user_email: ranbir@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: UK
+        flight_number: UK-820
+        pnr: PNR-118-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T08:30:00'
+        arrival_time: '2026-10-20T10:45:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 5400.0
+        status: CONFIRMED
+      - flight_leg_id: 2
+        airline_code: 6E
+        flight_number: 6E-701
+        pnr: PNR-118-2
+        origin: BOM
+        destination: BLR
+        departure_time: '2026-10-20T12:00:00'
+        arrival_time: '2026-10-20T13:45:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 3800.0
+        status: CONFIRMED
+    events:
+    - event_id: evt_multi_03_step1
+      event_type: CANCELLED
+      flight_id: 2
+      flight_number: 6E-701
+      reason: Second leg cancelled; replacement must depart after Leg 1 arrival +
+        45m MCT
+      timestamp: '2026-10-20T07:00:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 3.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: REBOOKED
+      policy_verdict: APPROVED

@@ -1,0 +1,58 @@
+description: 'delay_07: [delay] (normal)'
+vars:
+  scenario_id: delay_07
+  category: delay
+  severity: normal
+  scenario:
+    id: delay_07
+    category: delay
+    severity: normal
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 115
+      user:
+        user_id: 15
+        user_name: Manish Malhotra
+        user_email: manish@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: UK
+        flight_number: UK-721
+        pnr: PNR-115-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T21:00:00'
+        arrival_time: '2026-10-20T23:15:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 5100.0
+        status: CONFIRMED
+      hotel:
+        hotel_id: HTL-BOM-115
+        hotel_name: Novotel Juhu
+        city: BOM
+        airport_code: BOM
+        checkin_date: '2026-10-20'
+        checkout_date: '2026-10-22'
+        room_type: Ocean View
+        rate_per_night_inr: 6500.0
+        status: CONFIRMED
+        confirmation_reference: HTL-CONF-115
+    event:
+      event_id: evt_delay_07
+      event_type: DELAYED
+      flight_id: 1
+      flight_number: UK-721
+      delay_minutes: 200
+      reason: Evening turnaround delay pushing arrival past midnight
+      timestamp: '2026-10-20T20:00:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 4.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: REBOOKED
+      policy_verdict: APPROVED

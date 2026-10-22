@@ -1,0 +1,57 @@
+description: "ReRoute Model Comparison Evaluation Suite (LLM_COMPARE_MODELS)"
+
+sharing: false
+cache: true
+outputPath: "results/models_comparison.json"
+
+prompts:
+  - "Evaluate scenario: {{scenario_id}}"
+
+providers:
+  - id: "file://provider.py:call_api"
+    label: "gemini-3.5-flash-lite"
+    config:
+      model: "gemini-3.5-flash-lite"
+      env:
+        PROMPTFOO_DISABLE_TELEMETRY: "1"
+        PROMPTFOO_DISABLE_SHARING: "1"
+        RUN_LIVE_LLM: "1"
+  - id: "file://provider.py:call_api"
+    label: "gemini-3.1-flash-lite"
+    config:
+      model: "gemini-3.1-flash-lite"
+      env:
+        PROMPTFOO_DISABLE_TELEMETRY: "1"
+        PROMPTFOO_DISABLE_SHARING: "1"
+        RUN_LIVE_LLM: "1"
+
+defaultTest:
+  assert:
+    - type: python
+      value: "file://asserts/invariants.py:no_hallucinated_flight"
+    - type: python
+      value: "file://asserts/invariants.py:price_cap_respected"
+    - type: python
+      value: "file://asserts/invariants.py:no_time_travel"
+    - type: python
+      value: "file://asserts/invariants.py:route_integrity"
+    - type: python
+      value: "file://asserts/invariants.py:policy_always_validated"
+    - type: python
+      value: "file://asserts/invariants.py:no_crash"
+    - type: python
+      value: "file://asserts/invariants.py:money_in_inr"
+
+tests:
+  - file://scenarios_real/real_01_cancellation.yaml
+  - file://scenarios_real/real_02_cancellation_blr.yaml
+  - file://scenarios_real/real_03_cancellation_hyd.yaml
+  - file://scenarios_real/real_04_delay_major.yaml
+  - file://scenarios_real/real_05_delay_minor.yaml
+  - file://scenarios_real/real_06_delay_hotel.yaml
+  - file://scenarios_real/real_07_notice_clean.yaml
+  - file://scenarios_real/real_08_notice_delay.yaml
+  - file://scenarios_real/real_09_notice_ambiguous.yaml
+  - file://scenarios_real/real_10_preference_enforcement.yaml
+  - file://scenarios_real/real_11_prompt_injection.yaml
+  - file://scenarios_real/real_12_missed_connection.yaml

@@ -1,0 +1,52 @@
+description: 'duplicate_noise_02: [duplicate_noise] (normal)'
+vars:
+  scenario_id: duplicate_noise_02
+  category: duplicate_noise
+  severity: normal
+  scenario:
+    id: duplicate_noise_02
+    category: duplicate_noise
+    severity: normal
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 141
+      user:
+        user_id: 41
+        user_name: Kavita Rao
+        user_email: kavita@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: 6E
+        flight_number: 6E-204
+        pnr: PNR-141-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T06:00:00'
+        arrival_time: '2026-10-20T08:10:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 4800.0
+        status: CONFIRMED
+    events:
+    - event_id: evt_dup_02
+      event_type: CANCELLED
+      flight_id: 1
+      flight_number: 6E-204
+      reason: Primary disruption event
+      timestamp: '2026-10-20T05:00:00'
+    - event_id: evt_dup_02
+      event_type: CANCELLED
+      flight_id: 1
+      flight_number: 6E-204
+      reason: Identical duplicate event delivered via redelivery
+      timestamp: '2026-10-20T05:02:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 3.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: REBOOKED
+      policy_verdict: APPROVED

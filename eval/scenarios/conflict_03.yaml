@@ -1,0 +1,59 @@
+description: 'conflict_03: [conflicting_constraints] (critical)'
+vars:
+  scenario_id: conflict_03
+  category: conflicting_constraints
+  severity: critical
+  scenario:
+    id: conflict_03
+    category: conflicting_constraints
+    severity: critical
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 138
+      user:
+        user_id: 38
+        user_name: Nawazuddin Siddiqui
+        user_email: nawaz@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: UK
+        flight_number: UK-901
+        pnr: PNR-138-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T06:00:00'
+        arrival_time: '2026-10-20T08:15:00'
+        cabin_class: PREMIUM_ECONOMY
+        fare_paid_inr: 8500.0
+        status: CONFIRMED
+    custom_flights:
+    - flight_id: UK-ECO-ONLY
+      airline_code: UK
+      airline_name: Vistara
+      flight_number: UK-903
+      origin: DEL
+      destination: BOM
+      departure_time: '2026-10-20T07:30:00'
+      arrival_time: '2026-10-20T09:45:00'
+      cabin_class: ECONOMY
+      fare_inr: 7000.0
+      available_seats: 5
+    event:
+      event_id: evt_conflict_03
+      event_type: CANCELLED
+      flight_id: 1
+      flight_number: UK-901
+      reason: Allowed cabin strictly PREMIUM_ECONOMY; only ECONOMY flights exist ->
+        CABIN_MISMATCH
+      timestamp: '2026-10-20T05:00:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 3.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - PREMIUM_ECONOMY
+    expected:
+      action: ESCALATED
+      new_flight: null

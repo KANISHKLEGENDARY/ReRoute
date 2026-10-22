@@ -1,0 +1,58 @@
+description: 'delay_03: [delay] (normal)'
+vars:
+  scenario_id: delay_03
+  category: delay
+  severity: normal
+  scenario:
+    id: delay_03
+    category: delay
+    severity: normal
+    seed: 42
+    llm_mode: fake_good
+    itinerary:
+      itinerary_id: 111
+      user:
+        user_id: 11
+        user_name: Tarun Joshi
+        user_email: tarun@example.com
+      legs:
+      - flight_leg_id: 1
+        airline_code: UK
+        flight_number: UK-985
+        pnr: PNR-111-1
+        origin: DEL
+        destination: BOM
+        departure_time: '2026-10-20T19:00:00'
+        arrival_time: '2026-10-20T21:15:00'
+        cabin_class: ECONOMY
+        fare_paid_inr: 5500.0
+        status: CONFIRMED
+      hotel:
+        hotel_id: HTL-BOM-111
+        hotel_name: Taj Santacruz
+        city: BOM
+        airport_code: BOM
+        checkin_date: '2026-10-20'
+        checkout_date: '2026-10-22'
+        room_type: Deluxe Room
+        rate_per_night_inr: 7500.0
+        status: CONFIRMED
+        confirmation_reference: HTL-CONF-111
+    event:
+      event_id: evt_delay_03
+      event_type: DELAYED
+      flight_id: 1
+      flight_number: UK-985
+      delay_minutes: 420
+      reason: Severe technical grounding, rescheduled to next morning
+      timestamp: '2026-10-20T17:30:00'
+    constraints:
+      max_fare_delta_inr: 5000.0
+      max_delay_hours: 8.0
+      min_airport_buffer_minutes: 45
+      min_connection_buffer_minutes: 45
+      allowed_cabins:
+      - ECONOMY
+    expected:
+      action: REBOOKED_AND_HOTEL
+      policy_verdict: APPROVED
