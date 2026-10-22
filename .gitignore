@@ -1,0 +1,45 @@
+# Environment and secrets
+.env
+*.env
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# LLM Safety & Rate Limiting Usage Counter
+.llm_usage*
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.local
+
+# Promptfoo Eval
+eval/node_modules/
+eval/results/*
+!eval/results/baseline.json
+!eval/results/baseline_full.json
+!eval/results/latest.json

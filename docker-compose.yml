@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: reroute_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: travel_concierge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d travel_concierge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis Event Bus Service
+  redis:
+    image: redis:7-alpine
+    container_name: reroute_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reroute_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=False
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgrespassword@postgres:5432/travel_concierge
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_CHANNEL=flight_events
+      - SECRET_KEY=supersecret_dev_key_change_in_production_environment_please
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./.llm_usage:/app/.llm_usage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

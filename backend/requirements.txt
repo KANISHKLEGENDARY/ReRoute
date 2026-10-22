@@ -1,0 +1,29 @@
+# Web Framework and Server
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+
+# Settings and Environment Variables management using Pydantic v2
+pydantic>=2.7.0
+pydantic-settings>=2.4.0
+
+# Database ORM and PostgreSQL Async Driver
+# - sqlalchemy[asyncio]: Modern Async ORM for Python with greenlet bundled
+# - asyncpg: Fast asynchronous PostgreSQL driver
+sqlalchemy[asyncio]>=2.0.30
+asyncpg>=0.29.0
+
+# Redis Async Client for pub/sub messaging
+redis>=5.0.8
+
+# Agent Orchestration, LLM & Utilities
+langgraph==1.2.14
+langchain-core==1.6.9
+langchain-google-genai==4.4.1
+google-genai==2.29.0
+httpx>=0.27.0
+numpy>=1.26.0
+
+# Authentication & Password Hashing
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+python-jose[cryptography]>=3.3.0
