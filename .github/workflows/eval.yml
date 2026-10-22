@@ -1,0 +1,134 @@
+name: Evaluation & Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "eval/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "eval/**"
+  workflow_dispatch:
+    inputs:
+      run_live_llm:
+        description: "Run live LLM model comparison (1 = true, 0 = false)"
+        required: false
+        default: "0"
+
+jobs:
+  fake-eval-gate:
+    name: In-Memory Fake Scenarios & Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pyyaml promptfoo
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: eval/package.json
+
+      - name: Install Node dependencies
+        working-directory: eval
+        run: npm ci
+
+      - name: Run Fake-Mode Evaluation Suite (Zero API Calls)
+        working-directory: eval
+        env:
+          PYTHONPATH: "${{ github.workspace }}/backend:${{ github.workspace }}/eval"
+          PROMPTFOO_DISABLE_TELEMETRY: "1"
+          PROMPTFOO_DISABLE_SHARING: "1"
+          PROMPTFOO_CACHE_ENABLED: "false"
+          RUN_LIVE_LLM: "0"
+        run: |
+          npx promptfoo eval -o results/latest.json --no-cache --no-share
+
+      - name: Enforce CI Pass Rate & Invariant Quality Gate
+        working-directory: eval
+        run: |
+          python scripts/pass_rate_gate.py results/latest.json
+
+      - name: Generate Evaluation Summary Report
+        working-directory: eval
+        if: always()
+        run: |
+          python scripts/summarize_results.py results/latest.json
+
+      - name: Upload Evaluation Results Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results-fake
+          path: eval/results/latest.json
+
+  live-model-comparison:
+    name: Live LLM Model Comparison (Manual Dispatch)
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_live_llm == '1' && github.repository == github.event.repository.full_name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pyyaml promptfoo langchain-google-genai
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: eval/package.json
+
+      - name: Install Node dependencies
+        working-directory: eval
+        run: npm ci
+
+      - name: Run Live Model Comparison (Concurrency 1, Counted & Paced)
+        working-directory: eval
+        env:
+          PYTHONPATH: "${{ github.workspace }}/backend:${{ github.workspace }}/eval"
+          PROMPTFOO_DISABLE_TELEMETRY: "1"
+          PROMPTFOO_DISABLE_SHARING: "1"
+          RUN_LIVE_LLM: "1"
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          npx promptfoo eval -c promptfooconfig.models.yaml -o results/models_comparison.json -j 1 --no-share
+
+      - name: Summarize Model Comparison
+        working-directory: eval
+        if: always()
+        run: |
+          python scripts/summarize_results.py results/models_comparison.json
+
+      - name: Upload Model Comparison Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results-models-comparison
+          path: eval/results/models_comparison.json

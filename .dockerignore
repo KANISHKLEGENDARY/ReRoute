@@ -1,0 +1,23 @@
+# Never bake .env or credentials into images
+.env
+*.env
+backend/.env
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Git
+.git
+.gitignore
+
+# LLM Safety & Rate Limiting Usage Counter
+.llm_usage*
