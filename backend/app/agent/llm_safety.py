@@ -14,6 +14,7 @@ Guarantees:
 """
 
 import asyncio
+import concurrent.futures
 import json
 import logging
 import os
@@ -81,6 +82,15 @@ def get_model_limits(model: str) -> Dict[str, Any]:
     cfg = limits_dict.get(norm, UNKNOWN_MODEL_LIMIT)
     rpm = int(cfg.get("rpm", 5))
     rpd = int(cfg.get("rpd", 20))
+
+    # Optional hard cap across all models (e.g. 100 calls/day for free deployed demo)
+    hard_limit = os.environ.get("LLM_HARD_DAILY_CALL_LIMIT")
+    if hard_limit:
+        try:
+            rpd = min(rpd, int(hard_limit))
+        except Exception:
+            pass
+
     stop_threshold = int(rpd * 0.8)
     warn_threshold = int(rpd * 0.6)
     pacing_interval = (60.0 / max(1, rpm)) * 1.2
@@ -202,10 +212,62 @@ def _write_usage_data(filepath: Path, data: Dict[str, Any]) -> None:
                 pass
 
 
+def _db_get_count(norm: str, day: str) -> int:
+    """Queries usage count from database table llm_usage using a worker thread."""
+    from app.core.database import async_session_factory
+    from app.models.llm_usage import LLMUsage
+    from sqlalchemy import select
+
+    async def _query():
+        async with async_session_factory() as session:
+            stmt = select(LLMUsage.count).where(LLMUsage.model == norm, LLMUsage.day == day)
+            res = await session.execute(stmt)
+            val = res.scalar()
+            return int(val) if val is not None else 0
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            return executor.submit(lambda: asyncio.run(_query())).result()
+    except Exception as e:
+        logger.warning("DB count lookup failed, returning 0: %s", e)
+        return 0
+
+
+def _db_record_attempt(norm: str, day: str) -> int:
+    """Increments and persists usage count in database table llm_usage."""
+    from app.core.database import async_session_factory
+    from app.models.llm_usage import LLMUsage
+    from sqlalchemy import select
+
+    async def _update():
+        async with async_session_factory() as session:
+            stmt = select(LLMUsage).where(LLMUsage.model == norm, LLMUsage.day == day)
+            row = (await session.execute(stmt)).scalars().first()
+            if row:
+                row.count += 1
+                new_val = row.count
+            else:
+                new_val = 1
+                session.add(LLMUsage(model=norm, day=day, count=1))
+            await session.commit()
+            return new_val
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            return executor.submit(lambda: asyncio.run(_update())).result()
+    except Exception as e:
+        logger.error("DB record attempt failed: %s", e)
+        return 1
+
+
 def get_model_call_count(model: str, day_str: Optional[str] = None) -> int:
     """Returns the recorded number of API call attempts for the given model and day."""
     norm = normalize_model_name(model)
     day = day_str or get_pacific_date()
+
+    if os.environ.get("LLM_USAGE_STORE", "").lower() == "db":
+        return _db_get_count(norm, day)
+
     filepath = get_usage_file_path()
     lockfile = filepath.with_suffix(".lock")
 
@@ -225,6 +287,10 @@ def record_call_attempt(model: str, day_str: Optional[str] = None) -> int:
     """
     norm = normalize_model_name(model)
     day = day_str or get_pacific_date()
+
+    if os.environ.get("LLM_USAGE_STORE", "").lower() == "db":
+        return _db_record_attempt(norm, day)
+
     filepath = get_usage_file_path()
     lockfile = filepath.with_suffix(".lock")
 

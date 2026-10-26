@@ -54,10 +54,16 @@ async def handle_disruption(
     pipeline_deps = deps or PipelineDeps()
 
     if constraints is None:
+        clock_time = pipeline_deps.clock
+        if clock_time and clock_time.date() <= booking.departure_time.date():
+            earliest_dep = clock_time
+        else:
+            earliest_dep = booking.departure_time
+
         constraints = TripConstraints(
             required_origin=booking.origin,
             required_destination=booking.destination,
-            earliest_departure_time=deps.clock if deps else datetime.utcnow(),
+            earliest_departure_time=earliest_dep,
             original_arrival_time=booking.arrival_time,
             allowed_cabins=[booking.cabin_class],
         )

@@ -58,6 +58,21 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("Database initialized successfully.")
 
+    # 1b. Auto-seed demo data if AUTO_SEED=true (creates demo records if database is empty/fresh)
+    if settings.AUTO_SEED:
+        logger.info("AUTO_SEED=true: checking and executing idempotent demo seeder...")
+        try:
+            from scripts.seed_demo import seed_demo
+            await seed_demo()
+        except ImportError:
+            try:
+                from backend.scripts.seed_demo import seed_demo
+                await seed_demo()
+            except Exception as e:
+                logger.error("Auto-seed failed: %s", e)
+        except Exception as e:
+            logger.error("Auto-seed failed: %s", e)
+
     # 2. Start Background Redis Consumer Task & Poller Task
     stop_event = asyncio.Event()
     listener_task = asyncio.create_task(

@@ -16,7 +16,7 @@ Guarantees:
 - Fallback reasons recorded: none, no_key, outage, rate_limit, budget, invalid_output, model_not_found.
 """
 
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timedelta, timezone
 import time
 from typing import Any, Dict, List, Optional, Protocol, TypedDict
 from langgraph.graph import StateGraph, END
@@ -287,18 +287,31 @@ def node_detect(state: ConciergeState) -> Dict[str, Any]:
     }
 
 
+def get_effective_disruption_time(state: ConciergeState) -> Optional[datetime]:
+    """Resolves disruption time, guarding against clock drift on historical/test bookings."""
+    event = state.get("event")
+    booking = state["booking"]
+    deps = state["deps"]
+    dt = event.timestamp if event and event.timestamp else deps.clock
+    from app.schemas.pipeline import to_naive_utc
+    if dt and to_naive_utc(dt) > to_naive_utc(booking.departure_time):
+        dt = booking.departure_time - timedelta(hours=2)
+    return dt
+
+
 def node_search(state: ConciergeState) -> Dict[str, Any]:
     booking = state["booking"]
     constraints = state.get("constraints")
     deps = state["deps"]
-    disruption_time = deps.clock
+    disruption_time = get_effective_disruption_time(state)
 
     target_date = booking.departure_time.date()
-    earliest_dep = (
-        constraints.earliest_departure_time
-        if constraints
-        else disruption_time
-    )
+    if constraints and constraints.earliest_departure_time:
+        earliest_dep = constraints.earliest_departure_time
+    elif disruption_time and disruption_time.date() <= target_date:
+        earliest_dep = disruption_time
+    else:
+        earliest_dep = booking.departure_time
 
     days_window = 1
     if constraints and constraints.max_delay_hours > 24:
@@ -621,7 +634,7 @@ async def node_agent_planning_loop(state: ConciergeState) -> Dict[str, Any]:
             candidate=cand_obj,
             original_booking=booking,
             constraints=constraints,
-            disruption_time=deps.clock,
+            disruption_time=get_effective_disruption_time(state),
         )
 
         if pol_eval.verdict == PolicyVerdict.APPROVED:
@@ -714,7 +727,7 @@ def node_policy_disposes(state: ConciergeState) -> Dict[str, Any]:
         candidate=selected,
         original_booking=booking,
         constraints=constraints,
-        disruption_time=deps.clock,
+        disruption_time=get_effective_disruption_time(state),
     )
 
     input_snap = {"candidate_id": selected.flight_id, "flight_number": selected.flight_number}

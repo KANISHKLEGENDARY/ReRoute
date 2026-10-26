@@ -11,6 +11,7 @@ from app.models.itinerary import Itinerary
 from app.models.flight_leg import FlightLeg, PollLog
 from app.models.hotel import HotelBooking
 from app.models.trace import DecisionTrace
+from app.models.llm_usage import LLMUsage
 
 __all__ = [
     "Base",
@@ -21,4 +22,5 @@ __all__ = [
     "PollLog",
     "HotelBooking",
     "DecisionTrace",
+    "LLMUsage",
 ]

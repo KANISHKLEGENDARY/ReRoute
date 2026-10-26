@@ -1,0 +1,62 @@
+# Render Infrastructure-as-Code Blueprint (100% Free Plans)
+# NOTE: If Render requests a credit card during blueprint sync due to account-level
+# anti-abuse checks, deploy manually via docs/DEPLOY.md which requires zero card details.
+
+services:
+  # 1. FastAPI Backend API Service (Docker)
+  - type: web
+    name: reroute-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: AUTO_SEED
+        value: "true"
+      - key: LLM_USAGE_STORE
+        value: "db"
+      - key: LLM_PROVIDER
+        value: google
+      - key: LLM_MODEL
+        value: gemini-3.5-flash-lite
+      - key: LLM_HARD_DAILY_CALL_LIMIT
+        value: "100"
+      - key: MAX_LLM_CALLS_PER_EVENT
+        value: "6"
+      - key: DEMO_API_KEY
+        generateValue: true
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reroute-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: reroute-redis
+          property: connectionString
+
+  # 2. Redis Key Value Instance (Pub/Sub Event Bus)
+  - type: keyvalue
+    name: reroute-redis
+    plan: free
+    region: oregon
+
+databases:
+  # 3. PostgreSQL Database (Storage & Persistent Quota Counter)
+  - name: reroute-postgres
+    plan: free
+    region: oregon
+    databaseName: travel_concierge
+    user: postgres

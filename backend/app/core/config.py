@@ -4,6 +4,7 @@
 # them once and makes them available anywhere in the app.
 
 from functools import lru_cache
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +16,18 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./travel_concierge.db"
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        """Convert standard postgres:// or postgresql:// URLs from Render into asyncpg driver format."""
+        if not v:
+            return v
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_CHANNEL: str = "flight_events"
 
@@ -24,15 +37,19 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = ""
     DEMO_API_KEY: str = ""
 
+    # Deployment auto-setup & storage flags
+    AUTO_SEED: bool = False
+    LLM_USAGE_STORE: str = "file"  # "file" (default) or "db"
+
     # Policy Thresholds
     POLICY_MAX_FARE_DELTA_INR: float = 5000.0
     POLICY_MAX_ARRIVAL_DELAY_HOURS: float = 3.0
     POLICY_MIN_AIRPORT_BUFFER_MINUTES: int = 45
     POLICY_MIN_CONNECTION_BUFFER_MINUTES: int = 45
 
-    # LLM Settings & Models (driven by env vars; no hardcoded model name defaults)
+    # LLM Settings & Models
     LLM_PROVIDER: str = "google"
-    LLM_MODEL: str = ""
+    LLM_MODEL: str = "gemini-3.5-flash-lite"
     LLM_GRADER_MODEL: str = "gemini-1.5-pro"
     LLM_COMPARE_MODELS: str = "gemini-1.5-flash,gemini-1.5-pro"
     GOOGLE_API_KEY: str = ""
@@ -63,6 +80,7 @@ class Settings(BaseSettings):
     MAX_TOKENS_PER_CALL: int = 2048
     DAILY_LLM_BUDGET_USD: float = 10.0
     DAILY_LLM_CALL_LIMIT: int = 100
+    LLM_HARD_DAILY_CALL_LIMIT: int = 100
     LLM_PRICE_INPUT_PER_MTOK_USD: float = 0.075
     LLM_PRICE_OUTPUT_PER_MTOK_USD: float = 0.30
     USD_TO_INR: float = 85.0  # Approximate conversion rate for UI/display metrics (manual setting)

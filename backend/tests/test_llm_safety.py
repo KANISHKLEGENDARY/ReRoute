@@ -305,3 +305,34 @@ def test_pacing_uses_model_rpm():
 
     limiter_5rpm = AsyncRateLimiter(model="gemini-3.6-flash")
     assert round(limiter_5rpm.min_interval_seconds, 2) == 14.40
+
+
+@pytest.mark.asyncio
+async def test_db_usage_store_caps_calls(monkeypatch):
+    """
+    When LLM_USAGE_STORE=db, call counts are tracked in database table llm_usage
+    and the 80% daily stop threshold still stops real calls.
+    """
+    from app.core.database import init_db
+    await init_db()
+
+    monkeypatch.setenv("LLM_USAGE_STORE", "db")
+    model = "gemini-3.6-flash"  # rpd = 20, 80% cap = 16
+    today = get_pacific_date()
+
+    # Initial count should be 0
+    assert get_model_call_count(model, today) == 0
+
+    # Record 15 attempts -> under cap
+    for _ in range(15):
+        record_call_attempt(model, today)
+    assert get_model_call_count(model, today) == 15
+    allowed, _ = check_call_safety(model, today)
+    assert allowed is True
+
+    # 16th attempt hits 80% threshold (16 / 20)
+    record_call_attempt(model, today)
+    assert get_model_call_count(model, today) == 16
+    allowed, reason = check_call_safety(model, today)
+    assert allowed is False
+    assert reason == "budget"

@@ -9,8 +9,23 @@ Enforces:
 
 import os
 import sys
+import types
+import uuid
 from unittest.mock import AsyncMock
 import pytest
+
+# Windows AppLocker fallback for uuid_utils if native .pyd is blocked
+try:
+    import uuid_utils  # noqa: F401
+except ImportError:
+    m = types.ModuleType("uuid_utils")
+    m.UUID, m.uuid1, m.uuid3, m.uuid4, m.uuid5 = uuid.UUID, uuid.uuid1, uuid.uuid3, uuid.uuid4, uuid.uuid5
+    m.uuid7, m.uuid8 = lambda: uuid.uuid4(), lambda: uuid.uuid4()
+    compat = types.ModuleType("uuid_utils.compat")
+    compat.uuid7, compat.UUID = lambda: uuid.uuid4(), uuid.UUID
+    m.compat = compat
+    sys.modules["uuid_utils"] = m
+    sys.modules["uuid_utils.compat"] = compat
 
 # 1. Force tests to use isolated in-memory SQLite, never the live database
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
