@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool, StaticPool
 from app.core.config import get_settings
-from app.models.base import Base
+from app.models import Base
 
 settings = get_settings()
 
@@ -73,6 +73,9 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
         def _migrate_decision_trace_columns(sync_conn):
+            # SQLite-only legacy migration; PostgreSQL tables are already created with event_id
+            if sync_conn.dialect.name != "sqlite":
+                return
             try:
                 res = sync_conn.exec_driver_sql("PRAGMA table_info(decision_trace)").fetchall()
                 col_names = [col[1] for col in res]
