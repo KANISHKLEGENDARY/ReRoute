@@ -40,6 +40,7 @@ services:
       dockerfile: Dockerfile
     container_name: reroute_backend
     restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - ./backend/.env
     environment:
@@ -59,6 +60,23 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # React 18 + Vite Operations Dashboard Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: reroute_frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
