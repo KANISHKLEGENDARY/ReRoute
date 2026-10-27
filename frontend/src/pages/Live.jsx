@@ -27,7 +27,7 @@ export default function Live() {
               time: st.timestamp ? new Date(st.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
               eventId: detail.event_id,
               stage: st.stage,
-              latency: st.output_snapshot?.latency_ms ? `${st.output_snapshot.latency_ms} ms` : '-',
+              latency: st.output_snapshot?.latency_ms ? `${Math.round(st.output_snapshot.latency_ms)} ms` : '-',
               snapshot: st.output_snapshot || {},
             }));
             setStages(recent);
@@ -55,7 +55,7 @@ export default function Live() {
             time: payload.data.timestamp ? new Date(payload.data.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
             eventId: payload.data.event_id || 'N/A',
             stage: payload.data.stage || 'STAGE',
-            latency: payload.data.latency_ms ? `${payload.data.latency_ms} ms` : '-',
+            latency: payload.data.latency_ms ? `${Math.round(payload.data.latency_ms)} ms` : '-',
             snapshot: payload.data.output_snapshot || {},
           };
           setStages((prev) => [item, ...prev].slice(0, 100));
@@ -68,73 +68,126 @@ export default function Live() {
     return () => ws.close();
   }, []);
 
+  const getStageChipClass = (stageStr) => {
+    const s = (stageStr || '').toUpperCase();
+    if (s.includes('RESULT') || s.includes('CONFIRM')) return 'chip-green';
+    if (s.includes('DISRUPTION') || s.includes('VERIFY')) return 'chip-amber';
+    if (s.includes('ERROR') || s.includes('FAIL')) return 'chip-red';
+    return 'chip-blue';
+  };
+
+  const getActionChipClass = (actionStr) => {
+    const a = (actionStr || '').toUpperCase();
+    if (a.includes('REBOOK')) return 'chip-green';
+    if (a.includes('ESCALAT')) return 'chip-amber';
+    if (a.includes('CANCEL') || a.includes('ERROR')) return 'chip-red';
+    return 'chip-blue';
+  };
+
   return (
-    <div>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="page-section">
+      <div className="page-header header-with-action">
         <div>
+          <div className="header-meta">LIVE DISPATCH · WEBSOCKET FEED</div>
           <h1 className="page-title">Live Pipeline Activity</h1>
-          <p className="page-subtitle">Real-time WebSocket stream of pipeline execution stages</p>
+          <p className="page-subtitle">Real-time telemetry stream of autonomous decision pipeline execution stages</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div className="live-pill">
-            <span className="live-dot" style={{ background: isConnected ? 'var(--success)' : 'var(--danger)' }} />
-            <span style={{ color: isConnected ? 'var(--success)' : 'var(--danger)' }}>{status}</span>
+
+        <div className="header-actions">
+          <div className="live-status-pill">
+            <span
+              className="live-pulse-dot"
+              style={{ background: isConnected ? 'var(--status-green)' : 'var(--status-red)' }}
+              aria-hidden="true"
+            />
+            <span style={{ color: isConnected ? 'var(--status-green)' : 'var(--status-red)' }}>
+              {status.toUpperCase()}
+            </span>
           </div>
           {stages.length > 0 && (
-            <button className="form-btn" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => setStages([])}>
-              Clear
+            <button
+              type="button"
+              className="btn-secondary"
+              aria-label="Clear live pipeline stages ticker"
+              onClick={() => setStages([])}
+            >
+              Clear Ticker
             </button>
           )}
         </div>
       </div>
 
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th style={{ width: 120 }}>Time</th>
-              <th style={{ width: 180 }}>Event ID</th>
-              <th style={{ width: 220 }}>Stage</th>
-              <th style={{ width: 100 }}>Latency</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stages.length === 0 ? (
+      <div className="airline-card departure-board-card">
+        <div className="card-header-bar">
+          <h2 className="section-title">Real-Time Status Ticker</h2>
+          <span className="card-tag tabular">{stages.length} ACTIVE STAGES</span>
+        </div>
+
+        <div className="table-responsive-wrapper">
+          <table className="departure-table">
+            <thead>
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
-                  <p style={{ marginBottom: 12 }}>Waiting for live events... No recent disruption in feed.</p>
-                  <Link to="/simulate" className="form-btn" style={{ display: 'inline-block', textDecoration: 'none' }}>
-                    Trigger a Simulation Event →
-                  </Link>
-                </td>
+                <th scope="col" style={{ width: '120px' }}>Time</th>
+                <th scope="col" style={{ width: '160px' }}>Event ID</th>
+                <th scope="col" style={{ width: '200px' }}>Stage</th>
+                <th scope="col" style={{ width: '110px' }}>Latency</th>
+                <th scope="col">Execution Output / Status</th>
               </tr>
-            ) : (
-              stages.map((st) => (
-                <tr key={st.id}>
-                  <td style={{ color: 'var(--text-muted)', fontFamily: 'monospace' }}>{st.time}</td>
-                  <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{st.eventId}</td>
-                  <td><span className="badge badge-neutral" style={{ fontWeight: 700 }}>{st.stage}</span></td>
-                  <td>{st.latency}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                    {st.stage === 'RESULT' && st.snapshot.action ? (
-                      <span className={`badge ${st.snapshot.action === 'REBOOKED' ? 'badge-success' : 'badge-warning'}`}>
-                        {st.snapshot.action}
-                      </span>
-                    ) : st.snapshot.policy_verdict ? (
-                      `Verdict: ${st.snapshot.policy_verdict}`
-                    ) : st.snapshot.model_used ? (
-                      `Model: ${st.snapshot.model_used}`
-                    ) : (
-                      'Completed'
-                    )}
+            </thead>
+            <tbody>
+              {stages.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="empty-table-cell">
+                    <p style={{ marginBottom: 12 }}>Waiting for live activity... No recent disruption events in stream.</p>
+                    <Link to="/simulate" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+                      Trigger a Simulation Event →
+                    </Link>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                stages.map((st) => (
+                  <tr key={st.id} className="board-row">
+                    <td data-label="Time" className="tabular time-cell">
+                      {st.time}
+                    </td>
+                    <td data-label="Event ID" className="monospace event-id-cell">
+                      {st.eventId && st.eventId !== 'N/A' ? (
+                        <Link to={`/events/${st.eventId}`} className="event-link">
+                          {st.eventId}
+                        </Link>
+                      ) : (
+                        st.eventId
+                      )}
+                    </td>
+                    <td data-label="Stage">
+                      <span className={`status-chip ${getStageChipClass(st.stage)}`}>
+                        {st.stage}
+                      </span>
+                    </td>
+                    <td data-label="Latency" className="tabular latency-cell">
+                      {st.latency}
+                    </td>
+                    <td data-label="Execution Output / Status" className="details-cell">
+                      {st.stage === 'RESULT' && st.snapshot.action ? (
+                        <span className={`status-chip ${getActionChipClass(st.snapshot.action)}`}>
+                          ● {st.snapshot.action}
+                        </span>
+                      ) : st.snapshot.policy_verdict ? (
+                        <span className="verdict-tag">Verdict: {st.snapshot.policy_verdict}</span>
+                      ) : st.snapshot.model_used ? (
+                        <span className="model-tag">Model: {st.snapshot.model_used}</span>
+                      ) : (
+                        <span className="neutral-tag">Completed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
+
