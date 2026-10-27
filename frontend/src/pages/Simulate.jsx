@@ -80,11 +80,18 @@ export default function Simulate() {
           <div className="form-group">
             <label className="form-label">Flight Leg</label>
             <select className="form-select" value={flightLegId} onChange={(e) => setFlightLegId(e.target.value)} required>
-              {legs.map((leg) => (
-                <option key={leg.id} value={leg.id}>
-                  {leg.airline_code}-{leg.flight_number}: {leg.departure_airport} → {leg.arrival_airport} ({leg.status})
-                </option>
-              ))}
+              {legs.map((leg) => {
+                const flightLabel = leg.flight_number?.startsWith(leg.airline_code)
+                  ? leg.flight_number
+                  : `${leg.airline_code}-${leg.flight_number}`;
+                const origin = leg.origin || leg.departure_airport || 'ORIG';
+                const dest = leg.destination || leg.arrival_airport || 'DEST';
+                return (
+                  <option key={leg.id} value={leg.id}>
+                    {flightLabel}: {origin} → {dest} ({leg.status})
+                  </option>
+                );
+              })}
             </select>
           </div>
 
